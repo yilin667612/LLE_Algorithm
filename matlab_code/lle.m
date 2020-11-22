@@ -18,30 +18,30 @@ fprintf(1,'LLE running on %d points in %d dimensions\n',N,D);
 % STEP1: COMPUTE PAIRWISE DISTANCES & FIND NEIGHBORS 
 fprintf(1,'-->Finding %d nearest neighbours.\n',K);
 
-X2 = sum(X.^2,1);
-distance = repmat(X2,N,1)+repmat(X2',1,N)-2*X'*X;
+X2 = sum(X.^2,1);  % 对矩阵X中每个元素求平方，并按列求和。
+distance = repmat(X2,N,1)+repmat(X2',1,N)-2*X'*X;  %X'表示X的转置。计算xi和xj的距离，表示为distance矩阵
 
-[sorted,index] = sort(distance);
-neighborhood = index(2:(1+K),:);
+[sorted,index] = sort(distance);  % 对距离排序
+neighborhood = index(2:(1+K),:);  % 得到最近邻前k个邻居
 
 
 
-% STEP2: SOLVE FOR RECONSTRUCTION WEIGHTS
+% STEP2: SOLVE FOR RECONSTRUCTION WEIGHTS 计算权重
 fprintf(1,'-->Solving for reconstruction weights.\n');
 
-if(K>D) 
+if(K>D)  % 如果邻居个数大于样本个数，进行正则化
   fprintf(1,'   [note: K>D; regularization will be used]\n'); 
   tol=1e-3; % regularlizer in case constrained fits are ill conditioned
 else
-  tol=0;
+  tol=0;  
 end
 
-W = zeros(K,N);
-for ii=1:N
-   z = X(:,neighborhood(:,ii))-repmat(X(:,ii),1,K); % shift ith pt to origin
-   C = z'*z;                                        % local covariance
-   C = C + eye(K,K)*tol*trace(C);                   % regularlization (K>D)
-   W(:,ii) = C\ones(K,1);                           % solve Cw=1
+W = zeros(K,N);  % 初始化参数
+for ii=1:N  % 遍历样本
+   z = X(:,neighborhood(:,ii))-repmat(X(:,ii),1,K); % shift ith pt to origin  计算样本xi和其每个邻居xij的差： (xi-xij) 
+   C = z'*z;                                        % local covariance  % 计算方差
+   C = C + eye(K,K)*tol*trace(C);                   % regularlization (K>D)  % 如果k<D，则不需要正则化
+   W(:,ii) = C\ones(K,1);                           % solve Cw=1  单位矩阵Ik除以C
    W(:,ii) = W(:,ii)/sum(W(:,ii));                  % enforce sum(w)=1
 end;
 
